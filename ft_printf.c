@@ -6,7 +6,7 @@
 /*   By: ael-habc <ael-habc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/10/16 09:00:06 by ael-habc          #+#    #+#             */
-/*   Updated: 2020/10/16 14:15:04 by ael-habc         ###   ########.fr       */
+/*   Updated: 2020/10/17 12:08:11 by ael-habc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,19 @@ int len(int n)
     return i;
 }
 
-char    *ft_itoa(int n)
+void ft_toUpper(char *s)
+{
+    char *str;
+    int i = 0;
+    while (s[i])
+    {
+        if(s[i] >= 'a' && s[i] <= 'z')
+                s[i] = s[i] - 32;
+        i++;
+    }
+}
+
+char    *ft_itoa(unsigned int n)
 {
     char *str;
     int i;
@@ -40,7 +52,8 @@ char    *ft_itoa(int n)
     }
     return (str);
 }
-char *ft_itoa_base(int value, int base)
+
+char *ft_itoa_base(unsigned long value, int base)
 {
     char *s;
     unsigned long nb;
@@ -48,13 +61,19 @@ char *ft_itoa_base(int value, int base)
     int i= 0;
     int count = 0;
     int sign = 0;
-    count = len(value);
+    nb = value;
+    while (nb > 0)
+    {
+        nb /= base;
+        count++;
+    }
     s = (char *)malloc(sizeof(char) * count + 1);
     i = count;
+    n = value;
     s[count] = '\0';
     while (i--)
     {
-        s[i] = (n % base < 10) ? n % base + '0' : n % base + 'A' - 10;
+        s[i] = (n % base < 10) ? n % base + '0' : n % base + 'a' - 10;
         n /= base;
     }
     return (s);
@@ -123,8 +142,81 @@ void handle_s(const char *s, int *ret, int *i, va_list pa)
 
 void handle_p(const char *s, int *ret, int *i, va_list pa)
 {
-    unsigned char  *c = va_arg(pa, void *);
+    char *str;
+    unsigned long  c = (unsigned long)va_arg(pa, char *);
+    str = ft_itoa_base(c,16);
+    write(1,"0x",3);
+    while(*str)
+    {
+        write(1,str,1);
+        *ret += 1;
+        str++;
+    }
+    *i += 2;
+}
+
+void handle_x(const char *s,int *ret, int *i, va_list pa)
+{
+    int c ;
+    char *str;
     
+    c = va_arg(pa, int);
+    str = ft_itoa_base(c, 16);
+    while(*str)
+    {
+        write(1,str,1);
+        *ret += 1;
+        str++;
+    }
+    *i += 2;
+    
+}
+
+void handle_X(const char *s,int *ret, int *i, va_list pa)
+{
+    int c ;
+    char *str;
+    
+    c = va_arg(pa, int);
+    str = ft_itoa_base(c, 16);
+    ft_toUpper(str);
+    while(*str)
+    {
+        write(1,str,1);
+        *ret += 1;
+        str++;
+    }
+    *i += 2;
+}
+
+void handle_o(const char *s,int *ret, int *i, va_list pa)
+{
+    int c;
+    char *str;
+    c = va_arg(pa, int);
+    str = ft_itoa_base(c,8);
+    while (*str)
+    {
+        write(1, str, 1);
+        *ret += 1;
+        str++;
+    }
+    *i += 2;
+}
+
+void handle_u(const char *s, int *ret, int *i, va_list pa)
+{
+    unsigned int c;
+    char *str;
+    c = (unsigned int)va_arg(pa,int);
+    str  = ft_itoa(c);
+    while (*str)
+    {
+        write(1, str, 1);
+        *ret += 1;
+        str++;
+    }
+    *i += 2;
 }
 
 void handle_type(const char *s, int *ret, int *i, va_list pa, char type)
@@ -137,7 +229,16 @@ void handle_type(const char *s, int *ret, int *i, va_list pa, char type)
         handle_d(s, ret, i, pa);
     if (type == 'p')
         handle_p(s, ret, i, pa);
-    
+    if (type == 'i')
+        handle_d(s, ret, i, pa);
+    if (type == 'x')
+        handle_x(s, ret, i, pa);
+    if (type == 'X')
+        handle_X(s, ret, i, pa);
+    if (type == 'o')
+        handle_o(s, ret, i, pa);
+    if (type == 'u')
+        handle_u(s, ret, i, pa);
 }   
 
 int ft_printf(const char *s, ...)
@@ -160,7 +261,6 @@ int ft_printf(const char *s, ...)
             type = ft_get_type(s, i);
             handle_type(s, &ret, &i, pa, type);
         }
-        
     }
     // end test
 	va_end(pa);
